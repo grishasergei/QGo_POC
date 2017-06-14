@@ -4,6 +4,7 @@ env
 env*
 .cache/
 .idea/
+data/
 
 # from https://gist.github.com/octocat/9257657
 # Compiled source #
