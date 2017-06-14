@@ -1,0 +1,55 @@
+import numpy as np
+
+
+def patches(image, patch_size, overlap):
+    """
+    Patches generator
+    :param image: ndarray
+    :param patch_size: (int, int)
+    :param overlap: float between 0.0 and 0.95
+    :return: ndarray generator
+    """
+    if (overlap < 0) or (overlap > 0.95):
+        raise Exception('Patch overlap must be between 0 and 0.95. Actual is {}'.format(overlap))
+
+    w_step = int(float(patch_size[0]) * overlap)
+    h_step = int(float(patch_size[1]) * overlap)
+
+    image = pad_for_patching(image, patch_size)
+
+    for x in range(0, image.shape[0] - w_step, w_step):
+        for y in range(0, image.shape[1] - h_step, h_step):
+            yield image[x:x+patch_size[0],
+                        y:y+patch_size[1]]
+
+
+def pad_for_patching(image, patch_size):
+    """
+    Pad an image in order to produce patches of equal size
+    :param image: ndarray
+    :param patch_size: (int, int)
+    :return: ndarray, padded image
+    """
+    h_pad = 0
+    if image.shape[0] % patch_size[0] != 0:
+        h_pad = patch_size[0] - image.shape[0] % patch_size[0]
+
+    w_pad = 0
+    if image.shape[1] % patch_size[1] != 0:
+        w_pad = patch_size[1] - image.shape[1] % patch_size[1]
+
+    if w_pad == 0 and h_pad == 0:
+        return image
+
+    w_pad_l = w_pad / 2
+    w_pad_r = w_pad - w_pad_l
+
+    h_pad_t = h_pad / 2
+    h_pad_b = h_pad - h_pad_t
+
+    pad_width = [(h_pad_t, h_pad_b), (w_pad_l, w_pad_r)]
+
+    if len(image.shape) == 3:
+        pad_width.append((0, 0))
+
+    return np.pad(image, pad_width, mode='constant', constant_values=0)
