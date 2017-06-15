@@ -5,6 +5,7 @@ from density_map import get_density_map_from_markers
 from scale_pyramid import scale_pyramid_generator
 from itertools import izip
 from patch import patches
+import numpy as np
 
 
 def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, scales, out_path):
@@ -25,10 +26,9 @@ def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, sca
             for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlay),
                                                                               patches(density_map, patch_size, patch_overlay))):
                 img_patch_name = '{}_patch_{}_{}.jpg'.format(image_name, scale_index, patch_index)
-                density_map_patch_name = '{}_density_map_patch_{}_{}.jpg'.format(image_name, scale_index, patch_index)
+                density_map_patch_name = '{}_density_map_patch_{}_{}'.format(image_name, scale_index, patch_index)
                 imsave(join(out_path[0], img_patch_name), img_patch)
-                imsave(join(out_path[1], density_map_patch_name), density_map_patch)
-
+                np.save(join(out_path[1], density_map_patch_name), density_map_patch)
     pass
 
 
