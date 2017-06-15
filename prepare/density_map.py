@@ -20,6 +20,6 @@ def get_density_map_from_markers(markers_file, img_size):
             continue
         density_map[marker['y'], marker['x']] = 1
 
-    density_map = gaussian_filter(density_map, sigma=3)
+    density_map = gaussian_filter(density_map, sigma=5)
 
     return density_map
