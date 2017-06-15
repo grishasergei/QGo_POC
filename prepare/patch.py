@@ -12,13 +12,13 @@ def patches(image, patch_size, overlap):
     if (overlap < 0) or (overlap > 0.95):
         raise Exception('Patch overlap must be between 0 and 0.95. Actual is {}'.format(overlap))
 
-    w_step = int(float(patch_size[0]) * overlap)
-    h_step = int(float(patch_size[1]) * overlap)
+    w_step = int(float(patch_size[0]) * (1.0 - overlap))
+    h_step = int(float(patch_size[1]) * (1.0 - overlap))
 
     image = pad_for_patching(image, patch_size)
 
-    for x in range(0, image.shape[0] - w_step, w_step):
-        for y in range(0, image.shape[1] - h_step, h_step):
+    for x in range(0, image.shape[0], w_step):
+        for y in range(0, image.shape[1], h_step):
             yield image[x:x+patch_size[0],
                         y:y+patch_size[1]]
 
