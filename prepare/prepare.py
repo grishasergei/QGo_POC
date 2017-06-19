@@ -2,7 +2,7 @@ from os import listdir
 from os.path import isfile, join, splitext, basename
 from skimage.io import imread, imsave
 from density_map import get_density_map_from_markers
-from scale_pyramid import scale_pyramid_generator
+from scale_pyramid import scale_image_generator, scale_density_map_generator
 from itertools import izip
 from patch import patches
 import numpy as np
@@ -21,8 +21,8 @@ def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, sca
     """
 
     for image_name, image_orig, density_map_orig in img_density_generator(img_path, markers_path):
-        for scale_index, (image, density_map) in enumerate(izip(scale_pyramid_generator(image_orig, scales),
-                                                                scale_pyramid_generator(density_map_orig, scales))):
+        for scale_index, (image, density_map) in enumerate(izip(scale_image_generator(image_orig, scales),
+                                                                scale_density_map_generator(density_map_orig, scales))):
             for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlay),
                                                                               patches(density_map, patch_size, patch_overlay))):
                 img_patch_name = '{}_patch_{}_{}.jpg'.format(image_name, scale_index, patch_index)
