@@ -16,24 +16,24 @@ def deep_branch(input_shape=None):
     # Block 1
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='deep_block1_conv1')(input_layer)
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='deep_block1_conv2')(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='deep_block1_pool')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='deep_block1_pool')(x)
 
     # Block 2
     x = Conv2D(128, (3, 3), activation='relu', padding='same', name='deep_block2_conv1')(x)
     x = Conv2D(128, (3, 3), activation='relu', padding='same', name='deep_block2_conv2')(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='deep_block2_pool')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='deep_block2_pool')(x)
 
     # Block 3
     x = Conv2D(256, (3, 3), activation='relu', padding='same', name='deep_block3_conv1')(x)
     x = Conv2D(256, (3, 3), activation='relu', padding='same', name='deep_block3_conv2')(x)
     x = Conv2D(256, (3, 3), activation='relu', padding='same', name='deep_block3_conv3')(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='deep_block3_pool')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), padding='same', name='deep_block3_pool')(x)
 
     # Block 4
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='deep_block4_conv1')(x)
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='deep_block4_conv2')(x)
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='deep_block4_conv3')(x)
-    x = MaxPooling2D((3, 3), strides=(1, 1), name='deep_block4_pool')(x)
+    x = MaxPooling2D((3, 3), strides=(1, 1), padding='same', name='deep_block4_pool')(x)
 
     # Block 5
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='deep_block5_conv1', dilation_rate=2)(x)
@@ -62,15 +62,15 @@ def shallow_branch(input_shape=None):
 
     # Block 1
     x = Conv2D(24, (5, 5), activation='relu', padding='same', name='shallow_block1_conv1')(input_layer)
-    x = AvgPool2D((5, 5), strides=(2, 2), name='shallow_block1_pool')(x)
+    x = AvgPool2D((5, 5), strides=(2, 2), padding='same', name='shallow_block1_pool')(x)
 
     # Block 2
     x = Conv2D(24, (5, 5), activation='relu', padding='same', name='shallow_block2_conv1')(x)
-    x = AvgPool2D((5, 5), strides=(2, 2), name='shallow_block2_pool')(x)
+    x = AvgPool2D((5, 5), strides=(2, 2), padding='same', name='shallow_block2_pool')(x)
 
     # Block 3
     x = Conv2D(24, (5, 5), activation='relu', padding='same', name='shallow_block3_conv1')(x)
-    x = AvgPool2D((5, 5), strides=(2, 2), name='shallow_block3_pool')(x)
+    x = AvgPool2D((5, 5), strides=(2, 2), padding='same', name='shallow_block3_pool')(x)
 
     model = Model(input_layer, x, name='crowdnet_shallow')
 
@@ -91,7 +91,7 @@ def crowdnet(input_shape):
     model = Sequential()
 
     model.add(Merge([deep_part, shallow_part], mode='concat', name='top_merge'))
-    model.add(Conv2D(1, 1, 1, border_mode='same', name='top_conv1'))
+    model.add(Conv2D(1, (1, 1,), padding='same', name='top_conv1'))
     model.add(UpSampling2D(size=(8, 8), name='top_upsampling'))
 
     return model
