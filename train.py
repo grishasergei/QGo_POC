@@ -2,11 +2,16 @@ from __future__ import print_function
 from model.crowdnet import CrowdNet
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
-from itertools import izip
 from utils.explorer import create_dir
 import argparse
 from os.path import join
 from datetime import datetime
+
+# for python 2 & 3 compatibility
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 
 def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size):

@@ -3,9 +3,14 @@ from os.path import isfile, join, splitext, basename
 from skimage.io import imread, imsave
 from .density_map import get_density_map_from_markers
 from .scale_pyramid import scale_image_generator, scale_density_map_generator
-from itertools import izip
 from .patch import patches
 import numpy as np
+
+# for python 2 & 3 compatibility
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 
 def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, scales, out_path):
