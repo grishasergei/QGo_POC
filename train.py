@@ -1,3 +1,4 @@
+from __future__ import print_function
 from model.crowdnet import CrowdNet
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
@@ -20,19 +21,19 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
     :return:
     """
     if verbosity > 0:
-        print 'Creating model...'
+        print('Creating model...')
 
     crowdnet = CrowdNet()
     model = crowdnet.model_for_training(input_shape)
 
     if verbosity > 0:
-        print 'Compiling model...'
+        print('Compiling model...')
 
     model.compile(optimizer='adam',
                   loss='mean_squared_error')
 
     if verbosity > 0:
-        print 'Creating data generators...'
+        print('Creating data generators...')
 
     image_datagen = ImageDataGenerator(rescale=1./255)
     density_map_datagen = ImageDataGenerator()
@@ -61,7 +62,7 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
     train_generator = (([x, x], y) for x, y in izip(image_generator, density_map_generator))
 
     if verbosity > 0:
-        'Print starting training...'
+        print('starting training...')
 
     model.fit_generator(
         train_generator,
@@ -76,7 +77,7 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
     out_path = join('out', '{}_{}.h5'.format(crowdnet.name, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
     model.save(out_path)
     if verbosity > 0:
-        print 'model has been saved to {}'.format(out_path)
+        print('model has been saved to {}'.format(out_path))
 
 
 if __name__ == '__main__':

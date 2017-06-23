@@ -1,3 +1,4 @@
+from __future__ import print_function
 from keras.preprocessing.image import Iterator, img_to_array, array_to_img, _count_valid_files_in_directory, _list_valid_filenames_in_directory
 from keras import backend as K
 import os
