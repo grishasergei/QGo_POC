@@ -50,6 +50,9 @@ def img_density_generator(img_path, markers_path):
     if len(img_files) != len(marker_files):
         raise Exception('Number of images is not equal to the number of marker files')
 
+    img_files.sort()
+    marker_files.sort()
+
     for img_file, marker_file in zip(img_files, marker_files):
         if splitext(img_file)[0] != (splitext(marker_file)[0]).split('_')[0]:
             raise Exception('Image {} and Markers {} do not match'.format(img_file, marker_file))
