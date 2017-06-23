@@ -1,10 +1,10 @@
 from os import listdir
 from os.path import isfile, join, splitext, basename
 from skimage.io import imread, imsave
-from density_map import get_density_map_from_markers
-from scale_pyramid import scale_image_generator, scale_density_map_generator
+from .density_map import get_density_map_from_markers
+from .scale_pyramid import scale_image_generator, scale_density_map_generator
 from itertools import izip
-from patch import patches
+from .patch import patches
 import numpy as np
 
 
