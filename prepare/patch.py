@@ -41,11 +41,11 @@ def pad_for_patching(image, patch_size):
     if w_pad == 0 and h_pad == 0:
         return image
 
-    w_pad_l = w_pad / 2
-    w_pad_r = w_pad - w_pad_l
+    w_pad_l = int(w_pad / 2)
+    w_pad_r = int(w_pad - w_pad_l)
 
-    h_pad_t = h_pad / 2
-    h_pad_b = h_pad - h_pad_t
+    h_pad_t = int(h_pad / 2)
+    h_pad_b = int(h_pad - h_pad_t)
 
     pad_width = [(h_pad_t, h_pad_b), (w_pad_l, w_pad_r)]
 
