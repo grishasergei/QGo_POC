@@ -73,8 +73,7 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
         train_generator,
         steps_per_epoch=50,
         epochs=epochs,
-        verbose=verbosity,
-        batch_size=batch_size
+        verbose=verbosity
     )
 
     # save model after training
