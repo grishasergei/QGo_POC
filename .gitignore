@@ -7,6 +7,9 @@ env*
 data/
 tmp.*
 *.npy
+cache/
+out/
+*.h5
 
 # from https://gist.github.com/octocat/9257657
 # Compiled source #
