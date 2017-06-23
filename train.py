@@ -73,7 +73,7 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
 
     # save model after training
     create_dir('out')
-    out_path = join('out', '{}_{}.h5'.format(crowdnet.name, datetime.now().strftime("%yyyy-%mm-%dd-%H-%M-%S")))
+    out_path = join('out', '{}_{}.h5'.format(crowdnet.name, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
     model.save(out_path)
     if verbosity > 0:
         print 'model has been saved to {}'.format(out_path)
