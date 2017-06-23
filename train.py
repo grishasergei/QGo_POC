@@ -75,7 +75,8 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
         steps_per_epoch=50,
         epochs=epochs,
         verbose=verbosity,
-        workers=workers
+        workers=workers,
+        pickle_safe=workers > 1
     )
 
     # save model after training
