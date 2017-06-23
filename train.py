@@ -14,7 +14,7 @@ except ImportError:
     izip = zip
 
 
-def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size):
+def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
     """
 
     :param images_path: string
@@ -23,6 +23,7 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
     :param epochs: int
     :param verbosity: int
     :param batch_size: int
+    :param workers: int
     :return:
     """
     if verbosity > 0:
@@ -73,7 +74,8 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
         train_generator,
         steps_per_epoch=50,
         epochs=epochs,
-        verbose=verbosity
+        verbose=verbosity,
+        workers=workers
     )
 
     # save model after training
@@ -94,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--epochs', type=int, default=50, help='number of training epochs, 50 by default')
     parser.add_argument('-v', '--verbosity', action='count', default=0, help='verbosity level, expected to be between 0 and 2')
     parser.add_argument('-b', '--batch_size', default=32, type=int, help='number of images in a training batch')
+    parser.add_argument('-w', '--workers', default=4, type=int, help="maximum number of processes to spin up, default is 4")
 
     args = parser.parse_args()
 
@@ -102,4 +105,5 @@ if __name__ == '__main__':
           tuple(args.input_shape),
           args.epochs,
           args.verbosity,
-          args.batch_size)
+          args.batch_size,
+          args.workers)
