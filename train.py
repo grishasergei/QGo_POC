@@ -52,7 +52,7 @@ def read_npy_from_dir(dir, shape):
     return arrays
 
 
-def train_on_generators(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
+def train_on_generators(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate, workers):
     """
 
     :param images_path: string
@@ -61,6 +61,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
     :param epochs: int
     :param verbosity: int
     :param batch_size: int
+    :param learning_rate: float
     :param workers: int
     :return:
     """
@@ -73,7 +74,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
     if verbosity > 0:
         print('Compiling model...')
 
-    optimizer = SGD(lr=1e-7, momentum=0.9, decay=0)
+    optimizer = SGD(lr=learning_rate, momentum=0.9, decay=0)
 
     model.compile(optimizer=optimizer,
                   loss='mean_squared_error')
@@ -127,7 +128,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
         print('model has been saved to {}'.format(out_path))
 
 
-def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size):
+def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate):
     """
 
     :param images_path:
@@ -136,6 +137,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     :param epochs:
     :param verbosity:
     :param batch_size:
+    :param learning_rate: float
     :return:
     """
     if verbosity > 0:
@@ -155,7 +157,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
 
     if verbosity > 0:
         print('Compiling model...')
-    optimizer = SGD(lr=1e-7, momentum=0.9, decay=0)
+    optimizer = SGD(lr=learning_rate, momentum=0.9, decay=0)
     model.compile(optimizer=optimizer,
                   loss='mean_squared_error')
 
@@ -187,6 +189,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--batch_size', default=32, type=int, help='number of images in a training batch')
     parser.add_argument('-w', '--workers', default=4, type=int, help="maximum number of processes to spin up, default is 4")
     parser.add_argument('-m', '--in_memory', action='store_true', help="load training data into memory")
+    parser.add_argument('-lr', '--learning_rate', type=float, default=0.00001, help='learning rate')
 
     args = parser.parse_args()
 
@@ -194,18 +197,20 @@ if __name__ == '__main__':
         if args.verbosity > 0:
             print('Training model in memory')
         train_in_memory(args.images_path,
-              args.density_maps_path,
-              tuple(args.input_shape),
-              args.epochs,
-              args.verbosity,
-              args.batch_size)
+                        args.density_maps_path,
+                        tuple(args.input_shape),
+                        args.epochs,
+                        args.verbosity,
+                        args.batch_size,
+                        args.learning_rate)
     else:
         if args.verbosity > 0:
             print('Training model using generators')
         train_on_generators(args.images_path,
-              args.density_maps_path,
-              tuple(args.input_shape),
-              args.epochs,
-              args.verbosity,
-              args.batch_size,
-              args.workers)
+                            args.density_maps_path,
+                            tuple(args.input_shape),
+                            args.epochs,
+                            args.verbosity,
+                            args.batch_size,
+                            args.learning_rate,
+                            args.workers)
