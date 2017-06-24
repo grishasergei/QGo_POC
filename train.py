@@ -2,10 +2,15 @@ from __future__ import print_function
 from model.crowdnet import CrowdNet
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
-from utils.explorer import create_dir
+from utils.explorer import create_dir, get_files_in_dir
 import argparse
 from os.path import join
 from datetime import datetime
+from keras.optimizers import SGD
+import numpy as np
+from skimage.io import imread
+import os
+
 
 # for python 2 & 3 compatibility
 try:
@@ -14,7 +19,40 @@ except ImportError:
     izip = zip
 
 
-def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
+def read_images_from(dir, img_shape):
+    """
+
+    :param dir:
+    :param img_shape:
+    :return:
+    """
+    img_files = get_files_in_dir(dir, '.jpg')
+    num_imgs = len(img_files)
+    images = np.zeros((num_imgs,) + img_shape, dtype=float)
+    as_grey = img_shape[2] == 1
+    for i, f in enumerate(img_files):
+        img = imread(os.path.join(dir, f), as_grey=as_grey)
+        images[i] = img
+    images = np.divide(images, 255.)
+    return images
+
+
+def read_npy_from_dir(dir, shape):
+    """
+
+    :param dir:
+    :param shape:
+    :return:
+    """
+    npy_files = get_files_in_dir(dir, '.npy')
+    num_arrays = len(npy_files)
+    arrays = np.zeros((num_arrays,) + shape, dtype=float)
+    for i, f in enumerate(npy_files):
+        arrays[i] = np.load(os.path.join(dir, f))
+    return arrays
+
+
+def train_on_generators(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
     """
 
     :param images_path: string
@@ -35,7 +73,9 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
     if verbosity > 0:
         print('Compiling model...')
 
-    model.compile(optimizer='adam',
+    optimizer = SGD(lr=1e-7, momentum=0.9, decay=0)
+
+    model.compile(optimizer=optimizer,
                   loss='mean_squared_error')
 
     if verbosity > 0:
@@ -87,6 +127,43 @@ def train(images_path, density_maps_path, input_shape, epochs, verbosity, batch_
         print('model has been saved to {}'.format(out_path))
 
 
+def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
+    """
+
+    :param images_path:
+    :param density_maps_path:
+    :param input_shape:
+    :param epochs:
+    :param verbosity:
+    :param batch_size:
+    :param workers:
+    :return:
+    """
+    x = read_images_from(images_path, input_shape)
+    y = read_npy_from_dir(density_maps_path, input_shape[0:2])
+    y = np.expand_dims(y, axis=3)
+    x = [x, x]
+
+    crowdnet = CrowdNet()
+    model = crowdnet.model_for_training(input_shape)
+    optimizer = SGD(lr=1e-7, momentum=0.9, decay=0)
+    model.compile(optimizer=optimizer,
+                  loss='mean_squared_error')
+
+    model.fit(x, y,
+              epochs=epochs,
+              verbose=verbosity,
+              batch_size=batch_size,
+              shuffle=True)
+
+    # save model after training
+    create_dir('out')
+    out_path = join('out', '{}_{}.h5'.format(crowdnet.name, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+    model.save(out_path)
+    if verbosity > 0:
+        print('model has been saved to {}'.format(out_path))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -98,13 +175,22 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbosity', action='count', default=0, help='verbosity level, expected to be between 0 and 2')
     parser.add_argument('-b', '--batch_size', default=32, type=int, help='number of images in a training batch')
     parser.add_argument('-w', '--workers', default=4, type=int, help="maximum number of processes to spin up, default is 4")
+    parser.add_argument('-m', '--in_memory', action='store_true', help="load training data into memory")
 
     args = parser.parse_args()
 
-    train(args.images_path,
-          args.density_maps_path,
-          tuple(args.input_shape),
-          args.epochs,
-          args.verbosity,
-          args.batch_size,
-          args.workers)
+    if args.in_memory:
+        train_in_memory(args.images_path,
+              args.density_maps_path,
+              tuple(args.input_shape),
+              args.epochs,
+              args.verbosity,
+              args.batch_size)
+    else:
+        train_on_generators(args.images_path,
+              args.density_maps_path,
+              tuple(args.input_shape),
+              args.epochs,
+              args.verbosity,
+              args.batch_size,
+              args.workers)
