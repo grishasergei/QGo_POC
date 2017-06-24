@@ -127,7 +127,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
         print('model has been saved to {}'.format(out_path))
 
 
-def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, workers):
+def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size):
     """
 
     :param images_path:
@@ -136,20 +136,31 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     :param epochs:
     :param verbosity:
     :param batch_size:
-    :param workers:
     :return:
     """
+    if verbosity > 0:
+        print('Reading images from {}'.format(images_path))
     x = read_images_from(images_path, input_shape)
+
+    if verbosity > 0:
+        print('Reading density maps from {}'.format(density_maps_path))
     y = read_npy_from_dir(density_maps_path, input_shape[0:2])
     y = np.expand_dims(y, axis=3)
     x = [x, x]
 
+    if verbosity > 0:
+        print('Creating model...')
     crowdnet = CrowdNet()
     model = crowdnet.model_for_training(input_shape)
+
+    if verbosity > 0:
+        print('Compiling model...')
     optimizer = SGD(lr=1e-7, momentum=0.9, decay=0)
     model.compile(optimizer=optimizer,
                   loss='mean_squared_error')
 
+    if verbosity > 0:
+        print('Starting training...')
     model.fit(x, y,
               epochs=epochs,
               verbose=verbosity,
@@ -180,6 +191,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.in_memory:
+        if args.verbosity > 0:
+            print('Training model in memory')
         train_in_memory(args.images_path,
               args.density_maps_path,
               tuple(args.input_shape),
@@ -187,6 +200,8 @@ if __name__ == '__main__':
               args.verbosity,
               args.batch_size)
     else:
+        if args.verbosity > 0:
+            print('Training model using generators')
         train_on_generators(args.images_path,
               args.density_maps_path,
               tuple(args.input_shape),
