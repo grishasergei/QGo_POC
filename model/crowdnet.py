@@ -13,10 +13,11 @@ class CrowdNet:
     def __init__(self):
         self.name = 'CrowdNet'
 
-    def _deep_branch(self, input_shape=None):
+    def _deep_branch(self, input_shape=None, load_weights=False):
         """
         Deep part of the CrowdNet model based on VGG16 model
         :param input_shape: tuple of int, shape of input images
+        :param load_weights: boolean, load or not Vgg16 weights
         :return: Sequential Keras model with ImageNet weights
         """
 
@@ -52,10 +53,11 @@ class CrowdNet:
         model = Model(input_layer, x, name='crowdnet_deep')
 
         # load weights
-        weights_path = get_file('vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                                WEIGHTS_PATH_NO_TOP,
-                                cache_subdir='cache')
-        model.load_weights(weights_path)
+        if load_weights:
+            weights_path = get_file('vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5',
+                                    WEIGHTS_PATH_NO_TOP,
+                                    cache_subdir='cache')
+            model.load_weights(weights_path)
 
         return model
 
@@ -104,7 +106,7 @@ class CrowdNet:
         :param input_shape: tuple of int, shape of input images
         :return: Keras Sequential model, not compiled
         """
-        deep_part = self._deep_branch(input_shape)
+        deep_part = self._deep_branch(input_shape, True)
         for layer in deep_part.layers:
             layer.trainable = False
 
@@ -119,11 +121,24 @@ class CrowdNet:
         :param input_shape: tuple of int, shape of input images
         :return: Keras Sequential model, not compiled
         """
-        deep_part = self._deep_branch(input_shape)
+        deep_part = self._deep_branch(input_shape, True)
         for layer in deep_part.layers[0:14]:
             layer.trainable = False
 
         shallow_part = self._shallow_branch(input_shape)
 
         return self._merge(deep_part, shallow_part)
+
+    def model_for_prediction(self, input_shape):
+        """
+        CrowdNet model configured for inference
+        except the last convolution block
+        :param input_shape: tuple of int, shape of input images
+        :return: Keras Sequential model, not compiled
+        """
+        deep_part = self._deep_branch(input_shape, False)
+        shallow_part = self._shallow_branch(input_shape)
+
+        return self._merge(deep_part, shallow_part)
+
 
