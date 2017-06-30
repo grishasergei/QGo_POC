@@ -16,7 +16,7 @@ empty_dir(density_maps_dir)
 
 prepare_training_data(img_path=img_dir,
                       markers_path=markers_dir,
-                      patch_size=(128, 128),
-                      patch_overlay=0,
+                      patch_size=(256, 256),
+                      patch_overlay=0.5,
                       scales=np.arange(0.5, 1.3, 0.1),
                       out_path=[patches_dir, density_maps_dir])
