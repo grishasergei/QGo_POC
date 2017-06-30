@@ -36,7 +36,7 @@ class DensityMap(object):
             x = int(marker['x'] * scale)
             arr[y, x] = 1
 
-        return gaussian_filter(arr, sigma=5)
+        return gaussian_filter(arr, sigma=10)
 
 
 def get_density_map_from_markers(markers_file, shape):
