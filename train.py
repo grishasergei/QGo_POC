@@ -1,5 +1,7 @@
 from __future__ import print_function
 from model.crowdnet import CrowdNet
+from model.mini import QgoMini
+from model.guangzhou import GuangzhouNet
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
 from utils.explorer import create_dir, get_files_in_dir
@@ -10,6 +12,7 @@ from keras.optimizers import SGD
 import numpy as np
 from skimage.io import imread
 import os
+from utils.losses import euclidean_distance_loss
 
 
 # for python 2 & 3 compatibility
@@ -77,7 +80,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
     optimizer = SGD(lr=learning_rate, momentum=0.9, decay=0)
 
     model.compile(optimizer=optimizer,
-                  loss='mean_squared_error')
+                  loss='mean_absolute_error')
 
     if verbosity > 0:
         print('Creating data generators...')
@@ -147,19 +150,24 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     if verbosity > 0:
         print('Reading density maps from {}'.format(density_maps_path))
     y = read_npy_from_dir(density_maps_path, input_shape[0:2])
+    # y = np.multiply(y, 100000)
     y = np.expand_dims(y, axis=3)
-    x = [x, x]
+
+    # create model object
+    model_obj = GuangzhouNet()
 
     if verbosity > 0:
-        print('Creating model...')
-    crowdnet = CrowdNet()
-    model = crowdnet.model_for_training(input_shape)
+        print('Creating {} model...'.format(model_obj.name))
+
+    model = model_obj.model_for_training(input_shape)
+    if model_obj.num_inputs > 1:
+        x = [x] * model_obj.num_inputs
 
     if verbosity > 0:
         print('Compiling model...')
     optimizer = SGD(lr=learning_rate, momentum=0.9, decay=0)
     model.compile(optimizer=optimizer,
-                  loss='mean_squared_error')
+                  loss=euclidean_distance_loss)
 
     if verbosity > 0:
         print('Starting training...')
@@ -171,7 +179,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
 
     # save model after training
     create_dir('out')
-    out_path = join('out', '{}_{}.h5'.format(crowdnet.name, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
+    out_path = join('out', '{}_{}.h5'.format(model_obj.name, datetime.now().strftime("%Y-%m-%d-%H-%M-%S")))
     model.save(out_path)
     if verbosity > 0:
         print('model has been saved to {}'.format(out_path))
