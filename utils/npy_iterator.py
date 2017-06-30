@@ -118,7 +118,6 @@ class NpyDirectoryIterator(Iterator):
         for i, j in enumerate(index_array):
             fname = self.filenames[j]
             img = np.load(os.path.join(self.directory, fname))
-            img = imresize(img, self.target_size)
             x = img_to_array(img, data_format=self.data_format)
             x = self.image_data_generator.random_transform(x)
             x = self.image_data_generator.standardize(x)
