@@ -12,6 +12,7 @@ class CrowdNet:
 
     def __init__(self):
         self.name = 'CrowdNet'
+        self.num_inputs = 2
 
     def _deep_branch(self, input_shape=None, load_weights=False):
         """
