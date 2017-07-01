@@ -13,6 +13,8 @@ import numpy as np
 from skimage.io import imread
 import os
 from utils.losses import euclidean_distance_loss
+from keras.callbacks import TensorBoard
+import keras.backend as K
 
 
 # for python 2 & 3 compatibility
@@ -31,12 +33,15 @@ def read_images_from(dir, img_shape):
     """
     img_files = get_files_in_dir(dir, '.jpg')
     num_imgs = len(img_files)
-    images = np.zeros((num_imgs,) + img_shape, dtype=float)
+    images = np.zeros((num_imgs,) + img_shape, dtype=K.floatx())
     as_grey = img_shape[2] == 1
     for i, f in enumerate(img_files):
         img = imread(os.path.join(dir, f), as_grey=as_grey)
+        if as_grey:
+            img = np.expand_dims(img, 2)
         images[i] = img
-    images = np.divide(images, 255.)
+    if not as_grey:
+        images = np.divide(images, 255.)
     return images
 
 
@@ -49,7 +54,7 @@ def read_npy_from_dir(dir, shape):
     """
     npy_files = get_files_in_dir(dir, '.npy')
     num_arrays = len(npy_files)
-    arrays = np.zeros((num_arrays,) + shape, dtype=float)
+    arrays = np.zeros((num_arrays,) + shape, dtype=K.floatx())
     for i, f in enumerate(npy_files):
         arrays[i] = np.load(os.path.join(dir, f))
     return arrays
@@ -131,7 +136,8 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
         print('model has been saved to {}'.format(out_path))
 
 
-def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate):
+def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate,
+                    tensorboard):
     """
 
     :param images_path:
@@ -141,6 +147,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     :param verbosity:
     :param batch_size:
     :param learning_rate: float
+    :param tensorboard: boolean
     :return:
     """
     if verbosity > 0:
@@ -150,7 +157,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     if verbosity > 0:
         print('Reading density maps from {}'.format(density_maps_path))
     y = read_npy_from_dir(density_maps_path, input_shape[0:2])
-    # y = np.multiply(y, 100000)
+    # y = np.multiply(y, 10000)
     y = np.expand_dims(y, axis=3)
 
     # create model object
@@ -169,12 +176,35 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     model.compile(optimizer=optimizer,
                   loss=euclidean_distance_loss)
 
+    callbacks = []
+    if tensorboard:
+        callbacks.append(TensorBoard(log_dir='./out/logs/tensorboard',
+                                     histogram_freq=1,
+                                     write_graph=False,
+                                     write_grads=True,
+                                     write_images=True))
+
+    datagen = ImageDataGenerator(
+        #samplewise_center=True,
+        #samplewise_std_normalization=True
+        #zca_whitening=True
+    )
+
+    #datagen.fit(x)
+
     if verbosity > 0:
         print('Starting training...')
+    """
+    model.fit_generator(datagen.flow(x, y, batch_size=batch_size, shuffle=True),
+                        epochs=epochs,
+                        steps_per_epoch=len(x)/batch_size,
+                        verbose=verbosity,
+                        callbacks=callbacks)
+    """
     model.fit(x, y,
+              batch_size=batch_size,
               epochs=epochs,
               verbose=verbosity,
-              batch_size=batch_size,
               shuffle=True)
 
     # save model after training
@@ -198,6 +228,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--workers', default=4, type=int, help="maximum number of processes to spin up, default is 4")
     parser.add_argument('-m', '--in_memory', action='store_true', help="load training data into memory")
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.00001, help='learning rate')
+    parser.add_argument('-tb', '--tensorboard', action='store_true', help='activate tensorboard visualization, log is written to ./out/logs/tensorboard')
 
     args = parser.parse_args()
 
@@ -210,7 +241,8 @@ if __name__ == '__main__':
                         args.epochs,
                         args.verbosity,
                         args.batch_size,
-                        args.learning_rate)
+                        args.learning_rate,
+                        args.tensorboard)
     else:
         if args.verbosity > 0:
             print('Training model using generators')
