@@ -28,8 +28,8 @@ def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, sca
     for image_name, image_orig, density_map_orig in img_density_generator(img_path, markers_path):
         for scale_index, (image, density_map) in enumerate(izip(scale_image_generator(image_orig, scales),
                                                                 scale_density_map_generator(density_map_orig, scales))):
-            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlay),
-                                                                              patches(density_map, patch_size, patch_overlay))):
+            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlay, 1),
+                                                                              patches(density_map, patch_size, patch_overlay, 1e-7))):
                 img_patch_name = '{}_patch_{}_{}.jpg'.format(image_name, scale_index, patch_index)
                 density_map_patch_name = '{}_density_map_patch_{}_{}'.format(image_name, scale_index, patch_index)
                 imsave(join(out_path[0], img_patch_name), img_patch)

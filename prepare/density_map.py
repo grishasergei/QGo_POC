@@ -1,6 +1,7 @@
 import numpy as np
 import json
 from scipy.ndimage.filters import gaussian_filter
+import keras.backend as K
 
 
 class DensityMap(object):
@@ -29,7 +30,7 @@ class DensityMap(object):
         shape = (int(self._shape[0] * scale),
                  int(self._shape[1] * scale))
 
-        arr = np.zeros(shape)
+        arr = np.full(shape, 1e-7, dtype=K.floatx())
 
         for marker in self._markers:
             y = int(marker['y'] * scale)

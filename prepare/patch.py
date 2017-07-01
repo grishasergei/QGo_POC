@@ -1,12 +1,13 @@
 import numpy as np
 
 
-def patches(image, patch_size, overlap):
+def patches(image, patch_size, overlap, cval):
     """
     Patches generator
     :param image: ndarray
     :param patch_size: (int, int)
     :param overlap: float between 0.0 and 0.95
+    :param cval: int
     :return: ndarray generator
     """
     if (overlap < 0) or (overlap > 0.95):
@@ -15,7 +16,7 @@ def patches(image, patch_size, overlap):
     w_step = int(float(patch_size[0]) * (1.0 - overlap))
     h_step = int(float(patch_size[1]) * (1.0 - overlap))
 
-    image = pad_for_patching(image, patch_size)
+    image = pad_for_patching(image, patch_size, cval)
 
     for x in range(0, image.shape[0] - w_step, w_step):
         for y in range(0, image.shape[1] - h_step, h_step):
@@ -23,11 +24,12 @@ def patches(image, patch_size, overlap):
                         y:y+patch_size[1]]
 
 
-def pad_for_patching(image, patch_size):
+def pad_for_patching(image, patch_size, cval):
     """
     Pad an image in order to produce patches of equal size
     :param image: ndarray
     :param patch_size: (int, int)
+    :param cval: int
     :return: ndarray, padded image
     """
     h_pad = 0
@@ -52,4 +54,4 @@ def pad_for_patching(image, patch_size):
     if len(image.shape) == 3:
         pad_width.append((0, 0))
 
-    return np.pad(image, pad_width, mode='constant', constant_values=0)
+    return np.pad(image, pad_width, mode='constant', constant_values=cval)
