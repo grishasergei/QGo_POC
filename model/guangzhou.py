@@ -15,8 +15,7 @@ class GuangzhouNet:
     def _conv2d_bn(self, x, filters, conv_size, bn_axis):
         x = Conv2D(filters,
                    (conv_size, conv_size),
-                   padding='same',
-                   activity_regularizer=l2(l=0.01))(x)
+                   padding='same')(x)
         x = BatchNormalization(axis=bn_axis, scale=False)(x)
         x = Activation('relu')(x)
         return x
