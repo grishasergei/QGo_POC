@@ -1,4 +1,6 @@
-from keras.layers import Conv2D, MaxPooling2D, Input, UpSampling2D, concatenate, BatchNormalization, Activation
+from keras.layers import Conv2D, MaxPooling2D, Input, \
+    UpSampling2D, concatenate, BatchNormalization, \
+    Activation, AveragePooling2D
 from keras.models import Model
 from keras.regularizers import l2
 
@@ -74,9 +76,11 @@ class GuangzhouNet:
         x = concatenate([branch_7x7,
                          branch_5x5, branch_3x3], axis=channel_axis)
 
+        x = AveragePooling2D(pool_size=(5, 5), strides=(2, 2), padding='same')(x)
+
         x = self._conv2d_bn(x, 1000, 1, channel_axis)
         x = self._conv2d_bn(x, 1, 1, channel_axis)
-        x = UpSampling2D(size=(4, 4))(x)
+        x = UpSampling2D(size=(8, 8))(x)
 
         model = Model(input_layer, x, name=self.name)
 
