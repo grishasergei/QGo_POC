@@ -14,12 +14,13 @@ class GuangzhouNet:
         self.name = 'guangzhou_net'
         self.num_inputs = 1
 
-    def _conv2d_bn(self, x, filters, conv_size, bn_axis):
+    def _conv2d_bn(self, x, filters, conv_size, bn_axis, activation='relu'):
         x = Conv2D(filters,
                    (conv_size, conv_size),
-                   padding='same')(x)
+                   padding='same',
+                   activity_regularizer=l2(l=0.0001))(x)
         x = BatchNormalization(axis=bn_axis, scale=False)(x)
-        x = Activation('relu')(x)
+        x = Activation(activation)(x)
         return x
 
     def _model(self, input_shape):
