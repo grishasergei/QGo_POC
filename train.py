@@ -4,7 +4,7 @@ from model.mini import QgoMini
 from model.guangzhou import GuangzhouNet
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
-from utils.explorer import create_dir, get_files_in_dir
+from utils.explorer import create_dir, get_files_in_dir, empty_dir
 import argparse
 from os.path import join
 from datetime import datetime
@@ -13,7 +13,7 @@ import numpy as np
 from skimage.io import imread
 import os
 from utils.losses import euclidean_distance_loss
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, ModelCheckpoint
 import keras.backend as K
 
 
@@ -161,7 +161,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     y = np.expand_dims(y, axis=3)
 
     # create model object
-    model_obj = GuangzhouNet()
+    model_obj = QgoMini()
 
     if verbosity > 0:
         print('Creating {} model...'.format(model_obj.name))
@@ -184,6 +184,13 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
                                      write_grads=True,
                                      write_images=True))
 
+    checkpoint_path = './out/checkpoints/'
+    create_dir(checkpoint_path)
+    empty_dir(checkpoint_path)
+
+    checkpointer = ModelCheckpoint(join(checkpoint_path, 'checkpoint.{epoch:02d}.hdf5'), verbose=1)
+    callbacks.append(checkpointer)
+
     datagen = ImageDataGenerator(
         #samplewise_center=True,
         #samplewise_std_normalization=True
@@ -205,7 +212,8 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
               batch_size=batch_size,
               epochs=epochs,
               verbose=verbosity,
-              shuffle=True)
+              shuffle=True,
+              callbacks=callbacks)
 
     # save model after training
     create_dir('out')
