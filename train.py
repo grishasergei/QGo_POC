@@ -161,7 +161,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     y = np.expand_dims(y, axis=3)
 
     # create model object
-    model_obj = QgoMini()
+    model_obj = GuangzhouNet()
 
     if verbosity > 0:
         print('Creating {} model...'.format(model_obj.name))
