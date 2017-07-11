@@ -1,9 +1,10 @@
+from base import _ModelBase
 from keras.layers import Conv2D, MaxPooling2D, Input, AvgPool2D, Merge, UpSampling2D
 from keras.models import Model
 from keras.regularizers import l2
 
 
-class QgoMini:
+class QgoMini(_ModelBase):
 
     def __init__(self):
         self.name = 'qgo_mini'
@@ -17,16 +18,19 @@ class QgoMini:
         """
         input_layer = Input(input_shape)
 
-        # Block 1
-        x = Conv2D(32, (5, 5), activation='relu', padding='same')(input_layer)
+        regularizer = l2(0.00001)
 
-        # Block 2
-        #x = Conv2D(32, (5, 5), activation='relu', padding='same')(x)
-        #x = AvgPool2D((5, 5), strides=(2, 2), padding='same')(x)
+        x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer)(input_layer)
+        x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer)(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same')(x)
 
-        # Block 5
-        x = Conv2D(1, (1, 1), padding='same', activation='relu')(x)
-        # x = UpSampling2D(size=(2, 2))(x)
+        x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer)(x)
+        x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer)(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same')(x)
+
+        x = Conv2D(100, (1, 1), padding='same', activation='relu', activity_regularizer=regularizer)(x)
+        x = Conv2D(1, (1, 1), padding='same', activation='relu', activity_regularizer=regularizer)(x)
+        x = UpSampling2D(size=(4, 4))(x)
 
         model = Model(input_layer, x, name='qgo_mini')
 
