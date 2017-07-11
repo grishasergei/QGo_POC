@@ -13,7 +13,7 @@ import numpy as np
 from skimage.io import imread
 import os
 from utils.losses import euclidean_distance_loss
-from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.callbacks import TensorBoard, ModelCheckpoint, TerminateOnNaN, LearningRateScheduler, ReduceLROnPlateau
 import keras.backend as K
 
 
@@ -58,6 +58,20 @@ def read_npy_from_dir(dir, shape):
     for i, f in enumerate(npy_files):
         arrays[i] = np.load(os.path.join(dir, f))
     return arrays
+
+
+def lr_scheduler(epoch):
+    """
+    Learning rate scheduler
+    :param epoch: int
+    :return: float
+    """
+    if epoch == 0:
+        return 10e-5
+    elif epoch == 1:
+        return 10e-6
+    else:
+        return 10e-7
 
 
 def train_on_generators(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate, workers):
@@ -137,7 +151,7 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
 
 
 def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate,
-                    tensorboard):
+                    tensorboard, checkpoint):
     """
 
     :param images_path:
@@ -148,6 +162,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     :param batch_size:
     :param learning_rate: float
     :param tensorboard: boolean
+    :param checkpoint: boolean
     :return:
     """
     if verbosity > 0:
@@ -161,7 +176,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     y = np.expand_dims(y, axis=3)
 
     # create model object
-    model_obj = GuangzhouNet()
+    model_obj = QgoMini()
 
     if verbosity > 0:
         print('Creating {} model...'.format(model_obj.name))
@@ -176,7 +191,21 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     model.compile(optimizer=optimizer,
                   loss=euclidean_distance_loss)
 
+    # callbacks
+    if verbosity > 0:
+        print('Creating callbacks...')
+
     callbacks = []
+
+    # termintate training on NAN
+    callbacks.append(TerminateOnNaN())
+
+    # learning rate scheduler
+    callbacks.append(LearningRateScheduler(lr_scheduler))
+
+    # Reduce learning rate if get stuck
+    callbacks.append(ReduceLROnPlateau(monitor='train_loss', factor=0.1, patience=5, min_lr=10e-10))
+
     if tensorboard:
         callbacks.append(TensorBoard(log_dir='./out/logs/tensorboard',
                                      histogram_freq=1,
@@ -184,30 +213,20 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
                                      write_grads=True,
                                      write_images=True))
 
-    checkpoint_path = './out/checkpoints/'
-    create_dir(checkpoint_path)
-    empty_dir(checkpoint_path)
+    if checkpoint:
+        checkpoint_path = './out/checkpoints/'
+        create_dir(checkpoint_path)
+        empty_dir(checkpoint_path)
 
-    checkpointer = ModelCheckpoint(join(checkpoint_path, 'checkpoint.{epoch:02d}.hdf5'), verbose=1)
-    callbacks.append(checkpointer)
+        checkpointer = ModelCheckpoint(join(checkpoint_path, 'checkpoint.{epoch:02d}.hdf5'), verbose=0)
+        callbacks.append(checkpointer)
 
-    datagen = ImageDataGenerator(
-        #samplewise_center=True,
-        #samplewise_std_normalization=True
-        #zca_whitening=True
-    )
-
-    #datagen.fit(x)
+        if verbosity > 0:
+            print('Checkpoints will be saved to {}'.format(checkpoint_path))
 
     if verbosity > 0:
         print('Starting training...')
-    """
-    model.fit_generator(datagen.flow(x, y, batch_size=batch_size, shuffle=True),
-                        epochs=epochs,
-                        steps_per_epoch=len(x)/batch_size,
-                        verbose=verbosity,
-                        callbacks=callbacks)
-    """
+
     model.fit(x, y,
               batch_size=batch_size,
               epochs=epochs,
@@ -237,6 +256,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--in_memory', action='store_true', help="load training data into memory")
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.00001, help='learning rate')
     parser.add_argument('-tb', '--tensorboard', action='store_true', help='activate tensorboard visualization, log is written to ./out/logs/tensorboard')
+    parser.add_argument('-cp', '--check_point', action='store_true', help='save model checkpoints')
 
     args = parser.parse_args()
 
@@ -250,7 +270,8 @@ if __name__ == '__main__':
                         args.verbosity,
                         args.batch_size,
                         args.learning_rate,
-                        args.tensorboard)
+                        args.tensorboard,
+                        args.check_point)
     else:
         if args.verbosity > 0:
             print('Training model using generators')
