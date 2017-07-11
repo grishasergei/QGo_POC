@@ -1,7 +1,5 @@
 from __future__ import print_function
-from model.crowdnet import CrowdNet
-from model.mini import QgoMini
-from model.guangzhou import GuangzhouNet
+from model import get_model
 from keras.preprocessing.image import ImageDataGenerator
 from utils.npy_iterator import NpyDirectoryIterator
 from utils.explorer import create_dir, get_files_in_dir, empty_dir
@@ -66,9 +64,7 @@ def lr_scheduler(epoch):
     :param epoch: int
     :return: float
     """
-    if epoch == 0:
-        return 10e-5
-    elif epoch == 1:
+    if epoch < 3:
         return 10e-6
     else:
         return 10e-7
@@ -150,10 +146,11 @@ def train_on_generators(images_path, density_maps_path, input_shape, epochs, ver
         print('model has been saved to {}'.format(out_path))
 
 
-def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate,
+def train_in_memory(model_name, images_path, density_maps_path, input_shape, epochs, verbosity, batch_size, learning_rate,
                     tensorboard, checkpoint):
     """
 
+    :param model_name: string, name of the model to be trained
     :param images_path:
     :param density_maps_path:
     :param input_shape:
@@ -176,7 +173,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     y = np.expand_dims(y, axis=3)
 
     # create model object
-    model_obj = QgoMini()
+    model_obj = get_model(model_name)
 
     if verbosity > 0:
         print('Creating {} model...'.format(model_obj.name))
@@ -204,7 +201,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
     callbacks.append(LearningRateScheduler(lr_scheduler))
 
     # Reduce learning rate if get stuck
-    callbacks.append(ReduceLROnPlateau(monitor='train_loss', factor=0.1, patience=5, min_lr=10e-10))
+    callbacks.append(ReduceLROnPlateau(monitor='loss', factor=0.1, patience=5, min_lr=10e-10))
 
     if tensorboard:
         callbacks.append(TensorBoard(log_dir='./out/logs/tensorboard',
@@ -245,6 +242,7 @@ def train_in_memory(images_path, density_maps_path, input_shape, epochs, verbosi
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('model', help='model name')
     parser.add_argument('images_path', help='path to the folder with training images')
     parser.add_argument('density_maps_path', help='path to the folder with corresponding density maps')
     parser.add_argument('input_shape', nargs='+', type=int, help='size of input data, expected as WIDTH HEIGHT CHANNELS')
@@ -263,7 +261,8 @@ if __name__ == '__main__':
     if args.in_memory:
         if args.verbosity > 0:
             print('Training model in memory')
-        train_in_memory(args.images_path,
+        train_in_memory(args.model,
+                        args.images_path,
                         args.density_maps_path,
                         tuple(args.input_shape),
                         args.epochs,
