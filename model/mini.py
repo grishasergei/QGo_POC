@@ -8,7 +8,6 @@ class QgoMini(_ModelBase):
 
     def __init__(self):
         self.name = 'qgo_mini'
-        self.num_inputs = 1
 
     def _model(self, input_shape):
         """
@@ -36,18 +35,3 @@ class QgoMini(_ModelBase):
 
         return model
 
-    def model_for_training(self, input_shape):
-        """
-
-        :param input_shape:
-        :return:
-        """
-        return self._model(input_shape)
-
-    def model_for_prediction(self, input_shape):
-        """
-
-        :param input_shape:
-        :return:
-        """
-        return self._model(input_shape)
