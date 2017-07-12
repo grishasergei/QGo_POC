@@ -6,7 +6,7 @@ from utils.explorer import create_dir, get_files_in_dir, empty_dir
 import argparse
 from os.path import join
 from datetime import datetime
-from keras.optimizers import SGD
+from keras.optimizers import SGD, adam
 import numpy as np
 from skimage.io import imread
 import os
@@ -64,6 +64,7 @@ def lr_scheduler(epoch):
     :param epoch: int
     :return: float
     """
+
     if epoch < 3:
         return 10e-6
     else:
@@ -184,7 +185,8 @@ def train_in_memory(model_name, images_path, density_maps_path, input_shape, epo
 
     if verbosity > 0:
         print('Compiling model...')
-    optimizer = SGD(lr=learning_rate, momentum=0.9, decay=0)
+    optimizer = SGD(lr=learning_rate, momentum=0.5, decay=0)
+
     model.compile(optimizer=optimizer,
                   loss=euclidean_distance_loss)
 
