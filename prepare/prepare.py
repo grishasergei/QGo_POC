@@ -37,7 +37,7 @@ def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, sca
                 if num_people > 30:
                     n += 1
                 if num_people > 40:
-                    n += 1
+                    n += 2
                 for i in range(n):
                     img_patch_name = '{}_patch_{}_{}_{}.jpg'.format(image_name, scale_index, patch_index, i)
                     density_map_patch_name = '{}_density_map_patch_{}_{}_{}'.format(image_name, scale_index, patch_index, i)
