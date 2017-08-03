@@ -2,6 +2,8 @@ from keras.layers import Conv2D, MaxPooling2D, Input, AvgPool2D, Merge, UpSampli
 from keras.models import Model, Sequential
 from keras.utils.data_utils import get_file
 from keras.applications.vgg16 import WEIGHTS_PATH_NO_TOP
+from .base import _ModelBase
+from keras.regularizers import l2
 
 
 class CrowdNet:
@@ -138,6 +140,111 @@ class CrowdNet:
         :return: Keras Sequential model, not compiled
         """
         deep_part = self._deep_branch(input_shape, False)
+        shallow_part = self._shallow_branch(input_shape)
+
+        return self._merge(deep_part, shallow_part)
+
+
+class CrowdNetMini(_ModelBase):
+    """
+    CorwdNet model
+    https://arxiv.org/pdf/1608.06197.pdf
+    """
+
+    def __init__(self):
+        self.name = 'CrowdNetMini'
+        self.num_inputs = 2
+        self.regularizer = l2(0.001)
+
+    def _conv2d(self, channels, kernel_size, l=0.):
+        regularizer = l2(l)
+        def out(x):
+            return Conv2D(channels,
+                          kernel_size,
+                          activation='relu',
+                          padding='same',
+                          activity_regularizer=regularizer)\
+                (x)
+        return out
+
+    def _deep_branch(self, input_shape=None):
+        """
+        Deep part of the CrowdNet model based on VGG16 model
+        :param input_shape: tuple of int, shape of input images
+        :return: Sequential Keras model with ImageNet weights
+        """
+
+        input_layer = Input(input_shape)
+
+        # Block 1
+        x = self._conv2d(32, (3, 3), l=0.001)(input_layer)
+        x = self._conv2d(32, (3, 3), l=0.001)(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same')(x)
+
+        # Block 2
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same')(x)
+
+        # Block 3
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), padding='same')(x)
+
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+        x = MaxPooling2D((3, 3), strides=(1, 1), padding='same')(x)
+
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+        x = self._conv2d(32, (3, 3))(x)
+
+        model = Model(input_layer, x, name='crowdnet_deep')
+
+        return model
+
+    def _shallow_branch(self, input_shape=None):
+        """
+        Shallow part of the CorwdNet model
+        :param input_shape: tuple of int, shape of input images
+        :return: Keras Sequential model
+        """
+
+        input_layer = Input(input_shape)
+
+        # Block 1
+        x = self._conv2d(24, (5, 5), l=0.001)(input_layer)
+        x = AvgPool2D((5, 5), strides=(2, 2), padding='same')(x)
+
+        # Block 2
+        x = self._conv2d(24, (5, 5))(x)
+        x = AvgPool2D((5, 5), strides=(2, 2), padding='same')(x)
+
+        # Block 3
+        x = self._conv2d(24, (5, 5))(x)
+        x = AvgPool2D((5, 5), strides=(2, 2), padding='same')(x)
+
+        model = Model(input_layer, x, name='crowdnet_shallow')
+
+        return model
+
+    def _merge(self, deep, shallow):
+        """
+        Merge deep and shallow networks into one combined model
+        :param deep: Keras Sequential model
+        :param shallow: Keras Sequential model
+        :return: Keras Sequential model
+        """
+        model = Sequential()
+        model.add(Merge([deep, shallow], mode='concat', name='top_merge'))
+        model.add(Conv2D(1, (1, 1,), activation='relu', padding='same'))
+        model.add(UpSampling2D(size=(8, 8), name='top_upsampling'))
+
+        return model
+
+    def _model(self, input_shape):
+        deep_part = self._deep_branch(input_shape)
         shallow_part = self._shallow_branch(input_shape)
 
         return self._merge(deep_part, shallow_part)
