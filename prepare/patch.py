@@ -7,7 +7,7 @@ def patches(image, patch_size, overlap, cval):
     :param image: ndarray
     :param patch_size: (int, int)
     :param overlap: float between 0.0 and 0.95
-    :param cval: int
+    :param cval: int, value for padding
     :return: ndarray generator
     """
     if (overlap < 0) or (overlap > 0.95):
@@ -18,8 +18,8 @@ def patches(image, patch_size, overlap, cval):
 
     image = pad_for_patching(image, patch_size, cval)
 
-    for x in range(0, image.shape[0] - w_step, w_step):
-        for y in range(0, image.shape[1] - h_step, h_step):
+    for x in range(0, image.shape[0], w_step):
+        for y in range(0, image.shape[1], h_step):
             yield image[x:x+patch_size[0],
                         y:y+patch_size[1]]
 
