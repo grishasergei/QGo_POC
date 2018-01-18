@@ -58,13 +58,27 @@ def read_npy_from_dir(dir, shape):
     return arrays
 
 
+def read_counts_from_dir(dir):
+    """
+
+    :param dir:
+    :return:
+    """
+    npy_files = get_files_in_dir(dir, '.npy')
+    num_arrays = len(npy_files)
+    arrays = np.zeros((num_arrays, 1), dtype=K.floatx())
+    for i, f in enumerate(npy_files):
+        arrays[i] = np.load(os.path.join(dir, f)).sum()
+    return arrays
+
+
 def lr_scheduler(epoch):
     """
     Learning rate scheduler
     :param epoch: int
     :return: float
     """
-
+    return 10e-7
     if epoch < 3:
         return 10e-6
     else:
@@ -169,9 +183,10 @@ def train_in_memory(model_name, images_path, density_maps_path, input_shape, epo
 
     if verbosity > 0:
         print('Reading density maps from {}'.format(density_maps_path))
-    y = read_npy_from_dir(density_maps_path, input_shape[0:2])
-    # y = np.multiply(y, 10000)
-    y = np.expand_dims(y, axis=3)
+
+    y = read_counts_from_dir(density_maps_path)
+    # y = read_npy_from_dir(density_maps_path, input_shape[0:2])
+    # y = np.expand_dims(y, axis=3)
 
     # create model object
     model_obj = get_model(model_name)
@@ -180,15 +195,15 @@ def train_in_memory(model_name, images_path, density_maps_path, input_shape, epo
         print('Creating {} model...'.format(model_obj.name))
 
     model = model_obj.model_for_training(input_shape)
+    model.summary()
     if model_obj.num_inputs > 1:
         x = [x] * model_obj.num_inputs
 
     if verbosity > 0:
         print('Compiling model...')
-    optimizer = SGD(lr=learning_rate, momentum=0.5, decay=0)
 
-    model.compile(optimizer=optimizer,
-                  loss=euclidean_distance_loss)
+    model.compile(optimizer='adam',
+                  loss='mean_squared_error')
 
     # callbacks
     if verbosity > 0:
@@ -200,10 +215,7 @@ def train_in_memory(model_name, images_path, density_maps_path, input_shape, epo
     callbacks.append(TerminateOnNaN())
 
     # learning rate scheduler
-    callbacks.append(LearningRateScheduler(lr_scheduler))
-
-    # Reduce learning rate if get stuck
-    callbacks.append(ReduceLROnPlateau(monitor='loss', factor=0.1, patience=5, min_lr=10e-10))
+    # callbacks.append(LearningRateScheduler(lr_scheduler))
 
     if tensorboard:
         callbacks.append(TensorBoard(log_dir='./out/logs/tensorboard',
@@ -213,7 +225,7 @@ def train_in_memory(model_name, images_path, density_maps_path, input_shape, epo
                                      write_images=True))
 
     if checkpoint:
-        checkpoint_path = './out/checkpoints/'
+        checkpoint_path = join('out', 'checkpoints')
         create_dir(checkpoint_path)
         empty_dir(checkpoint_path)
 

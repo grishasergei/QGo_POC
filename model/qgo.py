@@ -14,7 +14,7 @@ class QGo4B(_ModelBase):
 
         channel_axis = 3
 
-        regularizer = l2(0.0001)
+        regularizer = l2(0.0)
 
         x = Conv2D(32, (9, 9), activation='relu', padding='same', activity_regularizer=regularizer)(input_layer)
         x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same')(x)
@@ -45,9 +45,9 @@ class QGo4B(_ModelBase):
         x = UpSampling2D(size=(2, 2))(x)
         x = Conv2D(16, (7, 7), padding='same', activation='relu', activity_regularizer=regularizer)(x)
 
-        x = Conv2D(1, (1, 1), padding='same', activation='relu', activity_regularizer=regularizer)(x)
+        x = Conv2D(1, (1, 1), padding='same', activation='sigmoid')(x)
 
-        model = Model(input_layer, x, name='qgo_mini')
+        model = Model(input_layer, x, name=self.name)
 
         return model
 

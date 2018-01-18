@@ -162,8 +162,7 @@ class CrowdNetMini(_ModelBase):
             return Conv2D(channels,
                           kernel_size,
                           activation='relu',
-                          padding='same',
-                          activity_regularizer=regularizer)\
+                          padding='same')\
                 (x)
         return out
 
@@ -177,8 +176,8 @@ class CrowdNetMini(_ModelBase):
         input_layer = Input(input_shape)
 
         # Block 1
-        x = self._conv2d(32, (3, 3), l=0.001)(input_layer)
-        x = self._conv2d(32, (3, 3), l=0.001)(x)
+        x = self._conv2d(32, (3, 3))(input_layer)
+        x = self._conv2d(32, (3, 3))(x)
         x = MaxPooling2D((2, 2), strides=(2, 2), padding='same')(x)
 
         # Block 2
@@ -214,7 +213,7 @@ class CrowdNetMini(_ModelBase):
         input_layer = Input(input_shape)
 
         # Block 1
-        x = self._conv2d(24, (5, 5), l=0.001)(input_layer)
+        x = self._conv2d(24, (5, 5))(input_layer)
         x = AvgPool2D((5, 5), strides=(2, 2), padding='same')(x)
 
         # Block 2

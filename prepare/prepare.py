@@ -1,4 +1,3 @@
-
 from os import listdir
 from os.path import isfile, join, splitext, basename
 from skimage.io import imread, imsave
