@@ -1,36 +1,38 @@
 from __future__ import print_function
-from skimage.io import imread
 import numpy as np
-from os.path import join, basename
 from model import get_model
-import glob
+import argparse
 
 
-model_name = 'regression'
-grayscale = False
-if grayscale:
-    channels = 1
-else:
-    channels = 3
+def predict(x, model_name, weights_path):
+    model_obj = get_model(model_name)
 
-print('Creating {} object...'.format(model_name))
-model_obj = get_model(model_name)
-model = model_obj.model_for_prediction((256, 256, channels))
+    x = x / 255.
+    if x.ndim == 3:
+        x = np.expand_dims(x, axis=0)
 
-print('Loading weights...')
-model.load_weights(join('out', 'regression.h5'))
+    model = model_obj.model_for_prediction(x[0].shape)
 
-img_folder = join('data', 'test', 'patches')
-image_names = [basename(x) for x in glob.glob(join(img_folder, '*.jpg'))]
-image_names.sort()
+    model.load_weights(weights_path)
 
-for img_name in image_names:
-    img = imread(join(img_folder, img_name), as_grey=grayscale)
-    if not grayscale:
-        img = np.divide(img, 255.)
-    img = np.expand_dims(img, axis=0)
-    if grayscale:
-        img = np.expand_dims(img, axis=3)
+    predictions = model.predict(x)
 
-    prediction = int(round(model.predict(img).item()))
-    print("{}: {}".format(img_name, prediction))
+    return predictions
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('x_path', help='full path to the x array')
+    parser.add_argument('model', help='model name')
+    parser.add_argument('weights_path', help='full path to the model weights file')
+    parser.add_argument('-v', '--verbose', action='store_true', help='verbose')
+
+    args = parser.parse_args()
+    x = np.load(args.x_path)
+    predictions = predict(x, args.model, args.weights_path)
+
+    if args.verbose:
+        for i, prediction in enumerate(predictions):
+            print('{}: {}'.format(i, int(round(prediction[0]))))
+

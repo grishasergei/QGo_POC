@@ -16,21 +16,8 @@ except ImportError:
     izip = zip
 
 
-def lr_scheduler(epoch):
-    """
-    Learning rate scheduler
-    :param epoch: int
-    :return: float
-    """
-    return 10e-7
-    if epoch < 3:
-        return 10e-6
-    else:
-        return 10e-7
-
-
 def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_rate,
-                    tensorboard, checkpoint):
+                    tensorboard, checkpoint, validation_split):
     seed = 7
     np.random.seed(seed)
 
@@ -80,7 +67,15 @@ def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_ra
     if verbosity > 0:
         print('Starting training...')
 
-    x_train, x_validation, y_train, y_validation = train_test_split(x, y, test_size=0.2, random_state=seed)
+    if validation_split:
+        x_train, x_validation, y_train, y_validation = train_test_split(x, y, test_size=validation_split, random_state=seed)
+        validation_data = (x_validation, y_validation)
+    else:
+        if verbosity > 0:
+            print('No validation split')
+        x_train = x
+        y_train = y
+        validation_data = None
 
     if verbosity > 0:
         print('Shape before oversampling:')
@@ -98,10 +93,11 @@ def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_ra
         print('x: {}'.format(x_train.shape))
         print('y: {}'.format(y_train.shape))
 
-    model.summary()
+    if verbosity > 1:
+        model.summary()
 
     model.fit(x_train, y_train,
-              validation_data = (x_validation, y_validation),
+              validation_data=validation_data,
               batch_size=batch_size,
               epochs=epochs,
               verbose=verbosity,
@@ -130,6 +126,7 @@ if __name__ == '__main__':
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.00001, help='learning rate')
     parser.add_argument('-tb', '--tensorboard', action='store_true', help='activate tensorboard visualization, log is written to ./out/logs/tensorboard')
     parser.add_argument('-cp', '--check_point', action='store_true', help='save model checkpoints')
+    parser.add_argument('-vs', '--validation_split', type=float, default=0, help='percentage of data to be used as validation set')
 
     args = parser.parse_args()
 
@@ -147,4 +144,5 @@ if __name__ == '__main__':
                     args.batch_size,
                     args.learning_rate,
                     args.tensorboard,
-                    args.check_point)
+                    args.check_point,
+                    args.validation_split)
