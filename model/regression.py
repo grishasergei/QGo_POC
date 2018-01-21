@@ -6,7 +6,8 @@ from keras.regularizers import l2
 
 class Regression(_ModelBase):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(Regression, self).__init__(*args, **kwargs)
         self.name = 'regression'
 
     def _model(self, input_shape):
@@ -17,7 +18,7 @@ class Regression(_ModelBase):
         """
         input_layer = Input(input_shape)
 
-        regularizer_0 = l2(0.0001)
+        regularizer_0 = l2(0)
 
         x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer_0)(input_layer)
         x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same')(x)
@@ -27,8 +28,6 @@ class Regression(_ModelBase):
 
         x = Conv2D(32, (3, 3), activation='relu', padding='same', activity_regularizer=regularizer_0)(x)
         x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same')(x)
-
-        # x = Conv2D(1, (1, 1), activation='relu', padding='same', activity_regularizer=regularizer_0)(x)
 
         x = Flatten()(x)
 
