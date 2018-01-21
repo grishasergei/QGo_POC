@@ -18,8 +18,8 @@ def patches(image, patch_size, overlap, cval):
 
     image = pad_for_patching(image, patch_size, cval)
 
-    for x in range(0, image.shape[0], w_step):
-        for y in range(0, image.shape[1], h_step):
+    for x in range(0, image.shape[0] - int(patch_size[0] * overlap), w_step):
+        for y in range(0, image.shape[1] - int(patch_size[1] * overlap), h_step):
             yield image[x:x+patch_size[0],
                         y:y+patch_size[1]]
 
