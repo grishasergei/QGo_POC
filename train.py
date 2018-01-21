@@ -85,6 +85,10 @@ def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_ra
     # oversample patches of medium density
     indices = np.where(y_train <= 20)
     indices = np.where(y_train[indices] > 5)
+    y_train = np.concatenate((y_train, y_train[indices], y_train[indices]))
+    x_train = np.concatenate((x_train, x_train[indices], x_train[indices]))
+
+    indices = np.where(y_train[indices] > 20)
     y_train = np.concatenate((y_train, y_train[indices]))
     x_train = np.concatenate((x_train, x_train[indices]))
 
