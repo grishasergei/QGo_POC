@@ -18,10 +18,11 @@ model_obj = get_model(model_name)
 model = model_obj.model_for_prediction((256, 256, channels))
 
 print('Loading weights...')
-model.load_weights('./checkpoints/regression.hdf5')
+model.load_weights(join('out', 'regression.h5'))
 
 img_folder = join('data', 'test', 'patches')
 image_names = [basename(x) for x in glob.glob(join(img_folder, '*.jpg'))]
+image_names.sort()
 
 for img_name in image_names:
     img = imread(join(img_folder, img_name), as_grey=grayscale)
@@ -31,5 +32,5 @@ for img_name in image_names:
     if grayscale:
         img = np.expand_dims(img, axis=3)
 
-    prediction = model.predict(img)
-    print("{}: {}".format(img_name, prediction.item()))
+    prediction = int(round(model.predict(img).item()))
+    print("{}: {}".format(img_name, prediction))

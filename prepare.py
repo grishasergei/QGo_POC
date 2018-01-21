@@ -1,5 +1,6 @@
 from prepare.scale_pyramid import scale_image_generator
 from prepare.patch import patches
+from prepare.prepare import img_density_generator, scale_density_map_generator
 from utils.explorer import create_dir
 import numpy as np
 from os.path import join
@@ -9,15 +10,43 @@ from os import listdir
 from os.path import isfile, splitext, basename
 
 
-def make_patches(images_path, patch_size, overlap, scales, output_path):
-    files = [f for f in listdir(images_path) if isfile(join(images_path, f)) and splitext(basename(f))[1] == '.jpg']
+# for python 2 & 3 compatibility
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
-    for f in files:
-        image = imread(join(images_path, f))
+
+def make_patches(image_files, patch_size, overlap, scales, output_path):
+    for f in image_files:
+        image = imread(f)
         for scale_index, scaled_image in enumerate(scale_image_generator(image, scales)):
             for patch_index, patch in enumerate(patches(scaled_image, patch_size, overlap, 0)):
-                patch_name = '{}_patch_{}_{}.jpg'.format(f, scale_index, patch_index)
+                patch_name = '{}_patch_{}_{}.jpg'.format(splitext(basename(f))[0], scale_index, patch_index)
                 imsave(join(output_path, patch_name), patch)
+
+
+def make_patches_with_counts(images_path, markers_path, patch_size, patch_overlap, scales, output_path, save_patches_as_images):
+    patches_list = []
+    patch_counts = []
+    for image_name, image_orig, density_map_orig in img_density_generator(images_path, markers_path):
+        for scale_index, (image, density_map) in enumerate(izip(scale_image_generator(image_orig, scales),
+                                                                scale_density_map_generator(density_map_orig, scales))):
+            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlap, 1),
+                                                                              patches(density_map, patch_size, patch_overlap, 1e-7))):
+                num_people = density_map_patch.sum()
+                patch_counts.append(num_people)
+                patches_list.append(img_patch)
+
+                if save_patches_as_images:
+                    patch_name = '{}_patch_{}_{}.jpg'.format(image_name, scale_index, patch_index)
+                    imsave(join(output_path, patch_name), img_patch)
+
+    patches_list = np.stack(patches_list, axis=0)
+    np.save(join(output_path, 'patches'), patches_list, allow_pickle=True)
+
+    patch_counts = np.asarray(patch_counts)
+    np.save(join(output_path, 'patch_counts'), patch_counts, allow_pickle=True)
 
 
 if __name__ == '__main__':
@@ -31,12 +60,26 @@ if __name__ == '__main__':
     parser.add_argument('-smin', '--scale_min', type=float, default=1, help='start scale of the scale pyramid')
     parser.add_argument('-smax', '--scale_max', type=float, default=1, help='end of the scale pyramid range')
     parser.add_argument('-snum', '--scale_num', type=float, default=1, help='number of scales')
+    parser.add_argument('-m', '--markers_path', help='path to markers files')
+    parser.add_argument('-sp', '--save_patches_as_images', action='store_true', help='save patches a images')
 
     args = parser.parse_args()
 
     create_dir(args.output_path)
-    make_patches(args.images_path,
-                 args.patch_size,
-                 args.patch_overlap,
-                 np.linspace(args.scale_min, args.scale_max, num=args.scale_num),
-                 args.output_path)
+
+    if args.markers_path:
+        make_patches_with_counts(args.images_path,
+                                 args.markers_path,
+                                 args.patch_size,
+                                 args.patch_overlap,
+                                 np.linspace(args.scale_min, args.scale_max, num=args.scale_num),
+                                 args.output_path,
+                                 args.save_patches_as_images)
+    else:
+        image_files = [f for f in listdir(args.images_path) if isfile(join(args.images_path, f)) and splitext(basename(f))[1] == '.jpg']
+        image_files = [join(args.images_path, f) for f in image_files]
+        make_patches(image_files,
+                     args.patch_size,
+                     args.patch_overlap,
+                     np.linspace(args.scale_min, args.scale_max, num=args.scale_num),
+                     args.output_path)
