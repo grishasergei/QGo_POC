@@ -7,6 +7,8 @@ from datetime import datetime
 import numpy as np
 from keras.callbacks import TensorBoard, ModelCheckpoint, TerminateOnNaN, LearningRateScheduler, ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
+from keras import backend as K
+from keras.optimizers import Adam
 
 
 # for python 2 & 3 compatibility
@@ -14,6 +16,18 @@ try:
     from itertools import izip
 except ImportError:
     izip = zip
+
+
+def dice_coef(y_true, y_pred):
+    smooth = 1
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
 
 
 def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_rate,
@@ -30,7 +44,7 @@ def train_in_memory(model_name, x, y, epochs, verbosity, batch_size, learning_ra
     if verbosity > 0:
         print('Compiling model...')
 
-    model = model_obj.model_for_training(x.shape[1:], 'mean_squared_error', 'adam')
+    model = model_obj.model_for_training(x.shape[1:], dice_coef_loss, Adam(lr=1e-5))
 
     # callbacks
     if verbosity > 0:

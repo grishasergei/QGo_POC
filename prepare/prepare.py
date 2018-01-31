@@ -5,6 +5,7 @@ from .density_map import get_density_map_from_markers
 from .scale_pyramid import scale_image_generator, scale_density_map_generator
 from .patch import patches
 import numpy as np
+from prepare.labelme_mask import get_mask_from_labelme_xml
 
 # for python 2 & 3 compatibility
 try:
@@ -69,6 +70,26 @@ def img_density_generator(img_path, markers_path):
         density_map = get_density_map_from_markers(join(markers_path, marker_file),
                                                    image.shape[0:-1])
         yield splitext(img_file)[0], image, density_map
+
+
+def img_mask_generator(img_path, mask_path):
+    img_files = [f for f in listdir(img_path) if is_file(join(img_path, f), '.jpg')]
+    mask_files = [f for f in listdir(mask_path) if is_file(join(mask_path, f), '.xml')]
+
+    if len(img_files) != len(mask_files):
+        raise Exception('Number of images is not equal to the number of mask files')
+
+    img_files.sort()
+    mask_files.sort()
+
+    for img_file, marker_file in zip(img_files, mask_files):
+        if splitext(img_file)[0] != (splitext(marker_file)[0]).split('_')[0]:
+            raise Exception('Image {} and Mask {} do not match'.format(img_file, marker_file))
+
+    for img_file, mask_file in zip(img_files, mask_files):
+        image = read_image(join(img_path, img_file))
+        mask = get_mask_from_labelme_xml(join(mask_path, mask_file))
+        yield splitext(img_file)[0], image, mask
 
 
 def read_image(img_file):
