@@ -21,6 +21,5 @@ def get_mask_from_labelme_xml(xml_path):
         ImageDraw.Draw(img).polygon(polygon, outline=1, fill=1)
 
     mask = np.array(img)
-    mask = mask.astype(np.float)
 
     return mask
