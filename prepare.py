@@ -1,5 +1,5 @@
 from prepare.scale_pyramid import scale_image_generator
-from prepare.patch import patches
+from prepare.patch import patches_generator
 from prepare.prepare import img_density_generator, scale_density_map_generator, img_mask_generator
 from utils.explorer import create_dir
 import numpy as np
@@ -21,7 +21,7 @@ def make_patches(image_files, patch_size, overlap, scales, output_path):
     for f in image_files:
         image = imread(f)
         for scale_index, scaled_image in enumerate(scale_image_generator(image, scales)):
-            for patch_index, patch in enumerate(patches(scaled_image, patch_size, overlap, 0)):
+            for patch_index, patch in enumerate(patches_generator(scaled_image, patch_size, overlap, 0)):
                 patch_name = '{}_patch_{}_{}.jpg'.format(splitext(basename(f))[0], scale_index, patch_index)
                 imsave(join(output_path, patch_name), patch)
 
@@ -32,8 +32,8 @@ def make_patches_with_counts(images_path, markers_path, patch_size, patch_overla
     for image_name, image_orig, density_map_orig in img_density_generator(images_path, markers_path):
         for scale_index, (image, density_map) in enumerate(izip(scale_image_generator(image_orig, scales),
                                                                 scale_density_map_generator(density_map_orig, scales))):
-            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlap, 0),
-                                                                              patches(density_map, patch_size, patch_overlap, 0))):
+            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches_generator(image, patch_size, patch_overlap, 0),
+                                                                              patches_generator(density_map, patch_size, patch_overlap, 0))):
                 num_people = density_map_patch.sum()
                 patch_counts.append(num_people)
                 patches_list.append(img_patch)
@@ -56,8 +56,8 @@ def make_patches_with_masks(images_path, mask_path, patch_size, patch_overlap, s
         for scale_index, (image, mask) in enumerate(izip(scale_image_generator(image_orig, scales),
                                                          scale_image_generator(mask_orig, scales))):
             for patch_index, (img_patch, mask_patch) in enumerate(
-                    izip(patches(image, patch_size, patch_overlap, 0),
-                         patches(mask, patch_size, patch_overlap, 0))):
+                    izip(patches_generator(image, patch_size, patch_overlap, 0),
+                         patches_generator(mask, patch_size, patch_overlap, 0))):
                 patches_list.append(img_patch)
                 masks_list.append(mask_patch)
                 if save_patches_as_images:

@@ -3,7 +3,7 @@ from os.path import isfile, join, splitext, basename
 from skimage.io import imread, imsave
 from .density_map import get_density_map_from_markers
 from .scale_pyramid import scale_image_generator, scale_density_map_generator
-from .patch import patches
+from .patch import patches_generator
 import numpy as np
 from prepare.labelme_mask import get_mask_from_labelme_xml
 
@@ -28,8 +28,8 @@ def prepare_training_data(img_path, markers_path, patch_size, patch_overlay, sca
     for image_name, image_orig, density_map_orig in img_density_generator(img_path, markers_path):
         for scale_index, (image, density_map) in enumerate(izip(scale_image_generator(image_orig, scales),
                                                                 scale_density_map_generator(density_map_orig, scales))):
-            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches(image, patch_size, patch_overlay, 1),
-                                                                              patches(density_map, patch_size, patch_overlay, 1e-7))):
+            for patch_index, (img_patch, density_map_patch) in enumerate(izip(patches_generator(image, patch_size, patch_overlay, 1),
+                                                                              patches_generator(density_map, patch_size, patch_overlay, 1e-7))):
                 n = 1
                 num_people = density_map_patch.sum()
                 if num_people > 20:

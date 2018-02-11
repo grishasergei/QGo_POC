@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from ..patch import pad_for_patching
-from ..patch import patches
+from ..patch import patches_generator
 
 
 class TestPadForPatching(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestPatchesGEnerator(unittest.TestCase):
         patch_size = (256, 256, 3)
         overlap = 0
 
-        actual_patches = list(patches(image, patch_size, overlap, 0))
+        actual_patches = list(patches_generator(image, patch_size, overlap, 0))
         self.assertEqual(15, len(actual_patches))
         patch_shapes = set()
         for patch in actual_patches:
@@ -45,7 +45,7 @@ class TestPatchesGEnerator(unittest.TestCase):
         patch_size = (256, 256, 3)
         overlap = 0.5
 
-        actual_patches = list(patches(image, patch_size, overlap, 0))
+        actual_patches = list(patches_generator(image, patch_size, overlap, 0))
         self.assertEqual(45, len(actual_patches))
         patch_shapes = set()
         for patch in actual_patches:

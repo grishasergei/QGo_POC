@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def patches(image, patch_size, overlap, cval):
+def patches_generator(image, patch_size, overlap, cval):
     """
     Patches generator
     :param image: ndarray
